@@ -22,5 +22,8 @@ internal static class Guard
         value >= min ? value : throw new DomainException($"{name} must be at least {min}.");
 
     public static decimal NotNegative(decimal value, string name) =>
-        value >= 0 ? value : throw new DomainException($"{name} must not be negative.");
+        value >= 0 ? TwoDecimals(value, name) : throw new DomainException($"{name} must not be negative.");
+
+    public static decimal TwoDecimals(decimal value, string name) =>
+        decimal.Round(value, 2) == value ? value : throw new DomainException($"{name} must have at most two decimal places.");
 }

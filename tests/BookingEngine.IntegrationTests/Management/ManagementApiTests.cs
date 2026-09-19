@@ -243,6 +243,63 @@ public class ManagementApiTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Room_type_can_be_deleted_with_its_rate_plans()
+    {
+        var property = await CreatePropertyAsync();
+        var roomType = await CreateRoomTypeAsync(property.Id, "DBL");
+        var plan = await CreatePerPersonPlanAsync(property.Id, roomType.Id, "BAR");
+
+        var deleted = await _client.DeleteAsync($"/api/v1/properties/{property.Id}/room-types/{roomType.Id}", TestContext.Current.CancellationToken);
+        var planAfter = await _client.GetAsync($"/api/v1/properties/{property.Id}/rate-plans/{plan.Id}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, planAfter.StatusCode);
+    }
+
+    [Fact]
+    public async Task Room_type_with_plans_derived_from_elsewhere_cannot_be_deleted()
+    {
+        var property = await CreatePropertyAsync();
+        var parentRoom = await CreateRoomTypeAsync(property.Id, "DBL");
+        var childRoom = await CreateRoomTypeAsync(property.Id, "SGL");
+        var parent = await CreatePerPersonPlanAsync(property.Id, parentRoom.Id, "BAR");
+        await _client.PostJsonAsync($"/api/v1/properties/{property.Id}/rate-plans", new
+        {
+            room_type_id = childRoom.Id,
+            code = "BAR",
+            name = "Derived",
+            sell_mode = "per_person",
+            meal_plan = "breakfast",
+            child_fee = 0,
+            derived = new { parent_rate_plan_id = parent.Id, type = "amount", value = -20 },
+        });
+
+        var response = await _client.DeleteAsync($"/api/v1/properties/{property.Id}/room-types/{parentRoom.Id}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("room_type.has_derived_dependents", await ProblemCodeAsync(response));
+    }
+
+    [Fact]
+    public async Task Money_values_with_more_than_two_decimals_are_rejected()
+    {
+        var property = await CreatePropertyAsync();
+        var roomType = await CreateRoomTypeAsync(property.Id, "DBL");
+
+        var response = await _client.PostJsonAsync($"/api/v1/properties/{property.Id}/rate-plans", new
+        {
+            room_type_id = roomType.Id,
+            code = "FLEX",
+            name = "Flexible",
+            sell_mode = "per_room",
+            meal_plan = "room_only",
+            child_fee = 10.555m,
+        });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Resources_of_another_property_are_not_found()
     {
         var owner = await CreatePropertyAsync();

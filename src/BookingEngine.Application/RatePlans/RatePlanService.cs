@@ -71,12 +71,19 @@ public sealed class RatePlanService(IBookingDbContext db, IPropertyCache cache)
         }
 
         var roomType = await db.RoomTypes.AsNoTracking().SingleAsync(r => r.Id == ratePlan.RoomTypeId, ct);
+        var wasDerived = ratePlan.IsDerived;
         ratePlan.Update(request.Name, request.MealPlan, request.ChildFee);
 
         var applied = await ApplyPricingAsync(propertyId, ratePlan, roomType, request.Occupancies, request.Derived, ct);
         if (!applied.IsSuccess)
         {
             return applied.Error;
+        }
+
+        // Rates of a plan that becomes derived must not come back if it is detached later; it then stays closed until new rates arrive.
+        if (!wasDerived && ratePlan.IsDerived)
+        {
+            await db.Restrictions.Where(r => r.RatePlanId == id).ExecuteUpdateAsync(s => s.SetProperty(r => r.Rate, (decimal?)null), ct);
         }
 
         await db.SaveChangesAsync(ct);

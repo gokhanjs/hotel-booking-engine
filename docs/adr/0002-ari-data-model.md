@@ -14,8 +14,9 @@ Availability, rates and restrictions (ARI) must be representable in the shape th
   - `min_stay_arrival` uses the arrival date's value; `min_stay_through` uses the highest value across the stay's nights.
   - `max_stay` is evaluated on the arrival date. Sources disagree on this point; the behaviour is documented in the API and tested.
 - **Missing data means closed.** A night without an availability row or a restriction row is not sellable.
+- **Money values** (rates, fees, adjustments) accept at most two decimal places and are rejected otherwise, instead of being rounded silently by the `numeric(12,2)` columns.
 - **Pricing modes:** `per_room`, or `per_person` with an adjustment per adult count relative to the daily base rate (stored as `jsonb` on the rate plan). Children add a flat per-night fee.
-- **Derived rate plans** reference a parent in the same property with a percent or fixed adjustment. The price is computed at read time from the parent's occupancy price; restrictions stay per plan. Chains are rejected.
+- **Derived rate plans** reference a parent in the same property with a percent or fixed adjustment. The price is computed at read time from the parent's occupancy price; restrictions stay per plan. Chains are rejected. When a plan becomes derived its own stored rates are cleared, so detaching it later leaves it closed until new rates arrive instead of reviving outdated prices.
 - `code` and `sell_mode` are immutable after creation because channels map by code and stored rates depend on the mode.
 
 ## Consequences

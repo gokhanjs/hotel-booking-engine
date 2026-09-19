@@ -139,6 +139,48 @@ public class AriApiTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Detaching_a_derived_plan_does_not_revive_its_old_rates()
+    {
+        var (property, roomType, parent) = await SetupAsync();
+        var plan = await (await _client.PostJsonAsync($"/api/v1/properties/{property.Id}/rate-plans", new
+        {
+            room_type_id = roomType.Id,
+            code = "PROMO",
+            name = "Promo",
+            sell_mode = "per_room",
+            meal_plan = "room_only",
+            child_fee = 0,
+        })).ReadAsync<RatePlanResponse>();
+        await PostRestrictionsAsync(property.Id, new { rate_plan_id = plan.Id, date_from = _start, date_to = _start, rate = 100 });
+
+        var planUrl = $"/api/v1/properties/{property.Id}/rate-plans/{plan.Id}";
+        await _client.PutJsonAsync(planUrl, new
+        {
+            name = "Promo",
+            meal_plan = "room_only",
+            child_fee = 0,
+            derived = new { parent_rate_plan_id = parent.Id, type = "percent", value = -10 },
+        });
+        await _client.PutJsonAsync(planUrl, new { name = "Promo", meal_plan = "room_only", child_fee = 0 });
+
+        var row = Assert.Single(await ReadRestrictionsAsync(property.Id), r => r.RatePlanId == plan.Id);
+        Assert.Null(row.Rate);
+    }
+
+    [Theory]
+    [InlineData(99.995)]
+    [InlineData(0.001)]
+    public async Task Rates_with_more_than_two_decimals_are_rejected(double rate)
+    {
+        var (property, _, ratePlan) = await SetupAsync();
+
+        var response = await PostRestrictionsAsync(property.Id, new { rate_plan_id = ratePlan.Id, date_from = _start, date_to = _start, rate = (decimal)rate });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal("ari.invalid_precision", await ProblemCodeAsync(response));
+    }
+
+    [Fact]
     public async Task Empty_restriction_values_are_rejected()
     {
         var (property, _, ratePlan) = await SetupAsync();

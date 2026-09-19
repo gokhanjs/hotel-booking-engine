@@ -17,7 +17,7 @@ public sealed record DerivedPricing
 
         ParentRatePlanId = parentRatePlanId;
         Type = type;
-        Value = value;
+        Value = Guard.TwoDecimals(value, "Derived adjustment");
     }
 
     public decimal Apply(decimal parentRate)

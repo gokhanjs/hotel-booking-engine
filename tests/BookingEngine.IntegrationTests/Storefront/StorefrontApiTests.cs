@@ -119,20 +119,26 @@ public class StorefrontApiTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Storefront_is_rate_limited_per_client()
+    public async Task Storefront_is_rate_limited_per_client_ip()
     {
         var hotel = await SeedHotelAsync();
-        await using var limited = factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:StorefrontPermitsPerMinute", "2"));
-        var client = limited.CreateClient();
+        await using var limited = factory.WithWebHostBuilder(b => b
+            .UseSetting("RateLimiting:StorefrontPermitsPerMinute", "2")
+            .UseSetting("FORWARDEDHEADERS_ENABLED", "true"));
         var url = $"/api/v1/storefront/properties/{hotel.Property.Id}";
 
-        var statuses = new List<HttpStatusCode>();
-        for (var i = 0; i < 3; i++)
+        async Task<HttpStatusCode> GetAs(string clientIp)
         {
-            statuses.Add((await client.GetAsync(url, Ct)).StatusCode);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("X-Forwarded-For", clientIp);
+            return (await limited.CreateClient().SendAsync(request, Ct)).StatusCode;
         }
 
-        Assert.Equal([HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests], statuses);
+        var first = new[] { await GetAs("203.0.113.10"), await GetAs("203.0.113.10"), await GetAs("203.0.113.10") };
+        var second = await GetAs("198.51.100.20");
+
+        Assert.Equal([HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests], first);
+        Assert.Equal(HttpStatusCode.OK, second);
     }
 
     [Fact]

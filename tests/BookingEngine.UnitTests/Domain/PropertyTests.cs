@@ -23,6 +23,17 @@ public class PropertyTests
         Assert.Throws<DomainException>(() => property.SetLocation(null, 36.88m, null));
     }
 
+    [Theory]
+    [InlineData("Pacific/Kiritimati", "2026-10-06")]
+    [InlineData("Europe/Istanbul", "2026-10-05")]
+    [InlineData("Pacific/Pago_Pago", "2026-10-04")]
+    public void Today_follows_the_property_timezone_across_the_utc_date_line(string timezone, string expected)
+    {
+        var property = new Property("Hotel", "EUR", timezone, "TR", "Antalya");
+
+        Assert.Equal(DateOnly.Parse(expected), property.Today(new DateTimeOffset(2026, 10, 5, 10, 30, 0, TimeSpan.Zero)));
+    }
+
     [Fact]
     public void Blank_name_is_rejected()
     {

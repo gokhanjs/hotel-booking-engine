@@ -10,7 +10,7 @@ public class DerivedPricingTests
     [InlineData(DerivedAdjustmentType.Percent, 12.5, 80, 90)]
     [InlineData(DerivedAdjustmentType.Amount, 15.5, 100, 115.5)]
     [InlineData(DerivedAdjustmentType.Amount, -30, 100, 70)]
-    [InlineData(DerivedAdjustmentType.Percent, -33.333, 100, 66.67)]
+    [InlineData(DerivedAdjustmentType.Percent, -33.33, 10.01, 6.67)]
     public void Apply_adjusts_parent_rate(DerivedAdjustmentType type, decimal value, decimal parentRate, decimal expected)
     {
         var pricing = new DerivedPricing(Guid.NewGuid(), type, value);
@@ -24,6 +24,12 @@ public class DerivedPricingTests
         var pricing = new DerivedPricing(Guid.NewGuid(), DerivedAdjustmentType.Amount, -500);
 
         Assert.Equal(0, pricing.Apply(100));
+    }
+
+    [Fact]
+    public void Adjustments_with_more_than_two_decimals_are_rejected()
+    {
+        Assert.Throws<DomainException>(() => new DerivedPricing(Guid.NewGuid(), DerivedAdjustmentType.Percent, -33.333m));
     }
 
     [Theory]

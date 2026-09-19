@@ -15,6 +15,9 @@ public sealed class KnownExceptionHandler(IProblemDetailsService problemDetails)
             DomainException e => (StatusCodes.Status422UnprocessableEntity, "domain.rule_violation", e.Message),
             DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } } =>
                 (StatusCodes.Status409Conflict, "resource.duplicate", "A resource with the same unique values already exists."),
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.CheckViolation } }
+                or PostgresException { SqlState: PostgresErrorCodes.CheckViolation } =>
+                (StatusCodes.Status422UnprocessableEntity, "resource.constraint_violation", "The request violates a data constraint."),
             _ => null,
         };
 

@@ -63,6 +63,11 @@ public sealed class RatePlan : Entity
             throw new DomainException("Each adult count may appear only once.");
         }
 
+        foreach (var occupancy in list)
+        {
+            Guard.TwoDecimals(occupancy.PriceAdjustment, "Price adjustment");
+        }
+
         _occupancies.Clear();
         _occupancies.AddRange(list);
     }

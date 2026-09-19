@@ -72,6 +72,11 @@ public sealed class AriService(IBookingDbContext db, IAriWriter writer, IPropert
             return Error.Unprocessable("ari.empty_update", "Each value must set at least one rate or restriction field.");
         }
 
+        if (request.Values.Any(v => v.Rate is { } rate && decimal.Round(rate, 2) != rate))
+        {
+            return Error.Unprocessable("ari.invalid_precision", "Rates must have at most two decimal places.");
+        }
+
         var planIds = request.Values.Select(v => v.RatePlanId).Distinct().ToList();
         var plans = await db.RatePlans
             .Where(rp => planIds.Contains(rp.Id) && db.RoomTypes.Any(rt => rt.Id == rp.RoomTypeId && rt.PropertyId == propertyId))
