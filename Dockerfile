@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:2fa828c68761b1b8c23d7662dc134421b9d3b59fe1425fdbc80804e390cdb24d AS build
 WORKDIR /src
 
 COPY global.json dotnet-tools.json Directory.Build.props Directory.Packages.props .editorconfig ./
@@ -16,7 +16,7 @@ RUN dotnet publish src/BookingEngine.Api --no-restore -c Release -o /app -p:Open
       --project src/BookingEngine.Infrastructure --startup-project src/BookingEngine.Api \
       --output /app/efbundle
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra@sha256:6385dc0eaef704fad88d3f65c334e791a371bbe448f52ca39d83d2df49251e28 AS runtime
 WORKDIR /app
 COPY --from=build /app .
 

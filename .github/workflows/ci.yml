@@ -130,6 +130,7 @@ jobs:
           IMAGE: ${{ needs.image.outputs.image }}@${{ needs.image.outputs.digest }}
           APP_HOST: ${{ vars.APP_HOST }}
         run: |
+          : "${APP_HOST:?Set the APP_HOST repository variable before enabling deployment}"
           mkdir -p rendered
           for part in app migrate; do
             (cd "deploy/k8s/overlays/production/$part" && kustomize edit set image "booking-engine=$IMAGE")

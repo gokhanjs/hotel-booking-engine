@@ -74,7 +74,7 @@ Push to `main`. The `deploy` job:
 
 1. renders `data.yaml`, `migrate.yaml` and `app.yaml` with the image pinned by digest (the rendered files are kept as a workflow artifact);
 2. copies them with `deploy.sh` to `~/booking-engine-deploy` on the server;
-3. runs `deploy.sh`, which creates or updates the secrets, applies PostgreSQL and Redis and waits for them, runs the migration Job, applies the API and waits for the rollout, and rolls back automatically if the rollout does not become ready within five minutes;
+3. runs `deploy.sh`, which creates or updates the secrets, applies PostgreSQL and Redis and waits for them, runs the migration Job, applies the API and waits for the rollout, and rolls back to the previous release if the new one does not become ready within five minutes (a failed first release has nothing to roll back to and simply fails the job);
 4. calls `https://$APP_HOST/health/ready`.
 
 ## 7. Operations

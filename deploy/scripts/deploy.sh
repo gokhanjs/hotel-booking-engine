@@ -40,6 +40,11 @@ wait_for_job booking-engine-migrate
 
 kubectl apply -f "$DIR/app.yaml"
 if ! kubectl -n "$NS" rollout status deployment/booking-engine-api --timeout=300s; then
-  kubectl -n "$NS" rollout undo deployment/booking-engine-api
+  revisions=$(kubectl -n "$NS" rollout history deployment/booking-engine-api | grep -c '^[0-9]')
+  if [ "$revisions" -gt 1 ]; then
+    kubectl -n "$NS" rollout undo deployment/booking-engine-api
+  else
+    echo "The first release did not become ready; there is no previous release to roll back to." >&2
+  fi
   exit 1
 fi
