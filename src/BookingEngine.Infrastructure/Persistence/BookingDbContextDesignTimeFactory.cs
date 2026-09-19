@@ -7,7 +7,7 @@ namespace BookingEngine.Infrastructure.Persistence;
 internal sealed class BookingDbContextDesignTimeFactory : IDesignTimeDbContextFactory<BookingDbContext>
 {
     public BookingDbContext CreateDbContext(string[] args) => new(new DbContextOptionsBuilder<BookingDbContext>()
-        .UseNpgsql(Environment.GetEnvironmentVariable("ConnectionStrings__Postgres") ?? "Host=localhost;Port=5433;Database=booking;Username=booking")
+        .UseNpgsql(Environment.GetEnvironmentVariable("ConnectionStrings__Postgres") ?? "Host=localhost;Port=5433;Database=booking;Username=booking;Password=booking_dev")
         .UseSnakeCaseNamingConvention()
         .Options);
 }
