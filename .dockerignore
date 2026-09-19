@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+.git/
+.github/
+.idea/
+.local/
+.vs/
+docs/
+tests/
+**/*.md
+compose.yaml
+Dockerfile
+.dockerignore

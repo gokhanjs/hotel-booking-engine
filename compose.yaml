@@ -1,5 +1,8 @@
 name: booking-engine
 
+x-app-env: &app-env
+  ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=booking;Username=booking;Password=${POSTGRES_PASSWORD:-booking_dev};Gss Encryption Mode=Disable
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -28,6 +31,32 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  migrate:
+    profiles: [app]
+    image: booking-engine:local
+    build: .
+    entrypoint: ["/app/efbundle"]
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    profiles: [app]
+    image: booking-engine:local
+    build: .
+    environment:
+      <<: *app-env
+      ConnectionStrings__Redis: redis:6379
+      Management__ApiKey: ${MANAGEMENT_API_KEY:-dev-management-key}
+    ports:
+      - "8080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
 volumes:
   pgdata:
