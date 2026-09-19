@@ -1,24 +1,26 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  build-test:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
@@ -41,3 +43,127 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build --configuration Release
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build for scanning
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: booking-engine:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan for fixable vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: booking-engine:scan
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - if: github.event_name != 'pull_request'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          provenance: mode=max
+          sbom: true
+
+  deploy:
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.APP_HOST }}/docs
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Render manifests
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}@${{ needs.image.outputs.digest }}
+          APP_HOST: ${{ vars.APP_HOST }}
+        run: |
+          mkdir -p rendered
+          for part in app migrate; do
+            (cd "deploy/k8s/overlays/production/$part" && kustomize edit set image "booking-engine=$IMAGE")
+          done
+          kubectl kustomize deploy/k8s/overlays/production/data > rendered/data.yaml
+          kubectl kustomize deploy/k8s/overlays/production/migrate > rendered/migrate.yaml
+          # shellcheck disable=SC2016
+          kubectl kustomize deploy/k8s/overlays/production/app | envsubst '${APP_HOST}' > rendered/app.yaml
+          cp deploy/scripts/deploy.sh rendered/
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rendered-manifests
+          path: rendered/
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          MANAGEMENT_API_KEY: ${{ secrets.MANAGEMENT_API_KEY }}
+        run: |
+          ssh "$TARGET" 'rm -rf ~/booking-engine-deploy && mkdir -p ~/booking-engine-deploy'
+          scp rendered/* "$TARGET:~/booking-engine-deploy/"
+          printf 'POSTGRES_PASSWORD=%s\nMANAGEMENT_API_KEY=%s\n' "$POSTGRES_PASSWORD" "$MANAGEMENT_API_KEY" \
+            | ssh "$TARGET" 'set -a; . /dev/stdin; set +a; sh ~/booking-engine-deploy/deploy.sh'
+
+      - name: Smoke test
+        run: curl --fail --silent --show-error --retry 10 --retry-delay 6 --retry-all-errors "https://${{ vars.APP_HOST }}/health/ready"
