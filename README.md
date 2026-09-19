@@ -1,5 +1,8 @@
 # Booking Engine
 
+[![CI/CD](https://github.com/gokhanjs/hotel-booking-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gokhanjs/hotel-booking-engine/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A hotel distribution backend: properties define room types and rate plans, revenue managers push availability, rates and restrictions (ARI) in bulk, and a public storefront API prices stays in real time. There is no checkout; the system covers setup, pricing and availability search.
 
 The domain follows the model used by channel managers and OTAs (room-type-level inventory, rate-plan-level pricing and restrictions, closed to arrival/departure, minimum/maximum stay, per-person pricing, derived rates), so the data could be exchanged with distribution partners without translation.
