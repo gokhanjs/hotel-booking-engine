@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingEngine.Application.RoomTypes;
 
-public sealed class RoomTypeService(IBookingDbContext db)
+public sealed class RoomTypeService(IBookingDbContext db, IPropertyCache cache)
 {
     public async Task<Result<RoomTypeResponse>> CreateAsync(Guid propertyId, CreateRoomTypeRequest request, CancellationToken ct)
     {
@@ -22,6 +22,7 @@ public sealed class RoomTypeService(IBookingDbContext db)
 
         db.RoomTypes.Add(roomType);
         await db.SaveChangesAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return RoomTypeResponse.From(roomType);
     }
@@ -70,6 +71,7 @@ public sealed class RoomTypeService(IBookingDbContext db)
 
         roomType.Update(request.Name, request.CountOfRooms, request.MaxAdults, request.MaxChildren);
         await db.SaveChangesAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return RoomTypeResponse.From(roomType);
     }
@@ -88,6 +90,7 @@ public sealed class RoomTypeService(IBookingDbContext db)
         }
 
         var deleted = await db.RoomTypes.Where(r => r.Id == id && r.PropertyId == propertyId).ExecuteDeleteAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return deleted == 0 ? Error.NotFound("room_type") : Result.Success();
     }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingEngine.Application.RatePlans;
 
-public sealed class RatePlanService(IBookingDbContext db)
+public sealed class RatePlanService(IBookingDbContext db, IPropertyCache cache)
 {
     public async Task<Result<RatePlanResponse>> CreateAsync(Guid propertyId, CreateRatePlanRequest request, CancellationToken ct)
     {
@@ -31,6 +31,7 @@ public sealed class RatePlanService(IBookingDbContext db)
 
         db.RatePlans.Add(ratePlan);
         await db.SaveChangesAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return RatePlanResponse.From(ratePlan);
     }
@@ -79,6 +80,7 @@ public sealed class RatePlanService(IBookingDbContext db)
         }
 
         await db.SaveChangesAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return RatePlanResponse.From(ratePlan);
     }
@@ -91,6 +93,7 @@ public sealed class RatePlanService(IBookingDbContext db)
         }
 
         var deleted = await InProperty(propertyId).Where(r => r.Id == id).ExecuteDeleteAsync(ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return deleted == 0 ? Error.NotFound("rate_plan") : Result.Success();
     }

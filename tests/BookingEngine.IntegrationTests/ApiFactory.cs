@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
 
 [assembly: AssemblyFixture(typeof(BookingEngine.IntegrationTests.ApiFactory))]
 
@@ -23,10 +24,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     };
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine").Build();
+    private readonly RedisContainer _redis = new RedisBuilder("redis:8-alpine").Build();
 
     public async ValueTask InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync());
 
         await using var db = CreateDbContext();
         await db.Database.MigrateAsync();
@@ -36,7 +38,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Postgres", _postgres.GetConnectionString());
+        builder.UseSetting("ConnectionStrings:Redis", _redis.GetConnectionString());
         builder.UseSetting("Management:ApiKey", ApiKey);
+        builder.UseSetting("RateLimiting:StorefrontPermitsPerMinute", "100000");
     }
 
     public BookingDbContext CreateDbContext() =>
@@ -53,6 +57,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        await _redis.DisposeAsync();
     }
 }
 

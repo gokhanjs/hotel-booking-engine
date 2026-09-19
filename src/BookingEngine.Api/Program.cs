@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using BookingEngine.Api.Auth;
 using BookingEngine.Api.Endpoints;
 using BookingEngine.Api.Errors;
@@ -28,6 +29,18 @@ builder.Services
 builder.Services.AddOptions<ApiKeyAuthenticationOptions>(ApiKeyAuthenticationHandler.SchemeName).BindConfiguration("Management");
 builder.Services.AddAuthorization();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(StorefrontEndpoints.RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("RateLimiting:StorefrontPermitsPerMinute", 120),
+            Window = TimeSpan.FromMinutes(1),
+        }));
+});
+
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, _, _) =>
@@ -49,6 +62,7 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapOpenApi();
 app.MapScalarApiReference("/docs", options => options
@@ -64,5 +78,10 @@ app.MapGroup("/api/v1")
     .MapRoomTypes()
     .MapRatePlans()
     .MapAri();
+
+app.MapGroup("/api/v1/storefront")
+    .AllowAnonymous()
+    .RequireRateLimiting(StorefrontEndpoints.RateLimitPolicy)
+    .MapStorefront();
 
 app.Run();

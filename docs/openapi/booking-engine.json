@@ -1314,6 +1314,254 @@
           }
         ]
       }
+    },
+    "/api/v1/storefront/properties/{propertyId}": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Public property details with room types and rate plans",
+        "operationId": "GetStorefrontProperty",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontPropertyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storefront/properties/{propertyId}/search": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Search sellable room and rate offers for a stay",
+        "description": "Returns every room type and rate plan combination that can be sold for the whole stay, cheapest first. Availability, stop sell, closed to arrival/departure, minimum/maximum stay and occupancy pricing are applied.",
+        "operationId": "SearchAvailability",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "checkin",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "checkout",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "adults",
+            "in": "query",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 2
+            }
+          },
+          {
+            "name": "children",
+            "in": "query",
+            "schema": {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storefront/properties/{propertyId}/calendar": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Lowest nightly price per date",
+        "description": "Indicative one-night prices; length-of-stay and arrival/departure rules are applied at search time.",
+        "operationId": "GetPriceCalendar",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "adults",
+            "in": "query",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 2
+            }
+          },
+          {
+            "name": "children",
+            "in": "query",
+            "schema": {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1402,6 +1650,63 @@
             ],
             "items": {
               "$ref": "#/components/schemas/Weekday"
+            }
+          }
+        }
+      },
+      "CalendarDay": {
+        "required": [
+          "date",
+          "available",
+          "min_price"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "min_price": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "CalendarResponse": {
+        "required": [
+          "property_id",
+          "currency",
+          "adults",
+          "children",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "adults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "children": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarDay"
             }
           }
         }
@@ -1640,6 +1945,23 @@
           "all_inclusive"
         ]
       },
+      "NightlyPrice": {
+        "required": [
+          "date",
+          "price"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "OccupancyDto": {
         "required": [
           "adults",
@@ -1656,6 +1978,55 @@
           "price_adjustment": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "Offer": {
+        "required": [
+          "room_type_id",
+          "room_type_code",
+          "room_type_name",
+          "rate_plan_id",
+          "rate_plan_code",
+          "rate_plan_name",
+          "meal_plan",
+          "total_price",
+          "nightly"
+        ],
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "room_type_code": {
+            "type": "string"
+          },
+          "room_type_name": {
+            "type": "string"
+          },
+          "rate_plan_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rate_plan_code": {
+            "type": "string"
+          },
+          "rate_plan_name": {
+            "type": "string"
+          },
+          "meal_plan": {
+            "$ref": "#/components/schemas/MealPlan"
+          },
+          "total_price": {
+            "type": "number",
+            "format": "double"
+          },
+          "nightly": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightlyPrice"
+            }
           }
         }
       },
@@ -2072,11 +2443,182 @@
           }
         }
       },
+      "SearchResponse": {
+        "required": [
+          "property_id",
+          "currency",
+          "checkin",
+          "checkout",
+          "nights",
+          "adults",
+          "children",
+          "offers"
+        ],
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "checkin": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkout": {
+            "type": "string",
+            "format": "date"
+          },
+          "nights": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "adults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "children": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Offer"
+            }
+          }
+        }
+      },
       "SellMode": {
         "enum": [
           "per_room",
           "per_person"
         ]
+      },
+      "StorefrontPropertyResponse": {
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "timezone",
+          "country_code",
+          "city",
+          "address",
+          "latitude",
+          "longitude",
+          "room_types"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "country_code": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "address": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "latitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "room_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorefrontRoomType"
+            }
+          }
+        }
+      },
+      "StorefrontRatePlan": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "meal_plan"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "meal_plan": {
+            "$ref": "#/components/schemas/MealPlan"
+          }
+        }
+      },
+      "StorefrontRoomType": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "max_adults",
+          "max_children",
+          "rate_plans"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "max_adults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_children": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rate_plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorefrontRatePlan"
+            }
+          }
+        }
       },
       "UpdatePropertyRequest": {
         "required": [
@@ -2239,6 +2781,9 @@
     },
     {
       "name": "Availability, rates and restrictions"
+    },
+    {
+      "name": "Storefront"
     }
   ]
 }

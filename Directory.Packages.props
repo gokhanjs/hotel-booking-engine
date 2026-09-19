@@ -14,6 +14,7 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.6" />
     <PackageVersion Include="StackExchange.Redis" Version="3.2.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers.Redis" Version="4.15.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 </Project>

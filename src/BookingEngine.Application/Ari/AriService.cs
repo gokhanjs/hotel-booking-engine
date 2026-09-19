@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingEngine.Application.Ari;
 
-public sealed class AriService(IBookingDbContext db, IAriWriter writer, TimeProvider clock)
+public sealed class AriService(IBookingDbContext db, IAriWriter writer, IPropertyCache cache, TimeProvider clock)
 {
     public const int MaxDaysAhead = 730;
     public const int MaxDatesPerRequest = 20_000;
@@ -48,6 +48,7 @@ public sealed class AriService(IBookingDbContext db, IAriWriter writer, TimeProv
         }
 
         await writer.UpsertAvailabilityAsync(propertyId, changes, ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return new AriUpdateResponse(changes.Count);
     }
@@ -95,6 +96,7 @@ public sealed class AriService(IBookingDbContext db, IAriWriter writer, TimeProv
         }
 
         await writer.UpsertRestrictionsAsync(propertyId, changes, ct);
+        await cache.InvalidateAsync(propertyId, ct);
 
         return new AriUpdateResponse(changes.Count);
     }

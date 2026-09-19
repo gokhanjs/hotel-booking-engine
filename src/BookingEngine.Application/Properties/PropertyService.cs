@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingEngine.Application.Properties;
 
-public sealed class PropertyService(IBookingDbContext db)
+public sealed class PropertyService(IBookingDbContext db, IPropertyCache cache)
 {
     public async Task<PropertyResponse> CreateAsync(CreatePropertyRequest request, CancellationToken ct)
     {
@@ -51,6 +51,7 @@ public sealed class PropertyService(IBookingDbContext db)
         property.UpdateDetails(request.Name, request.Timezone, request.CountryCode, request.City);
         property.SetLocation(request.Address, request.Latitude, request.Longitude);
         await db.SaveChangesAsync(ct);
+        await cache.InvalidateAsync(id, ct);
 
         return PropertyResponse.From(property);
     }
@@ -58,6 +59,7 @@ public sealed class PropertyService(IBookingDbContext db)
     public async Task<Result> DeleteAsync(Guid id, CancellationToken ct)
     {
         var deleted = await db.Properties.Where(p => p.Id == id).ExecuteDeleteAsync(ct);
+        await cache.InvalidateAsync(id, ct);
 
         return deleted == 0 ? Error.NotFound("property") : Result.Success();
     }
