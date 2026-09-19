@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: booking-engine
+resources:
+  - ../../../base/migrate
+images:
+  - name: booking-engine
+    newName: ghcr.io/example/booking-engine
+    newTag: latest

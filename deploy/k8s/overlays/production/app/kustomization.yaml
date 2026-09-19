@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: booking-engine
+resources:
+  - ../../../base/app
+images:
+  - name: booking-engine
+    newName: ghcr.io/example/booking-engine
+    newTag: latest
+patches:
+  - target:
+      kind: Ingress
+      name: booking-engine-api
+    patch: |-
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: ${APP_HOST}
+      - op: replace
+        path: /spec/rules/0/host
+        value: ${APP_HOST}
