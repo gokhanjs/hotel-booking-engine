@@ -1,3 +1,4 @@
+using BookingEngine.Application.Abstractions;
 using BookingEngine.Domain.Inventory;
 using BookingEngine.Domain.Properties;
 using BookingEngine.Domain.RatePlans;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingEngine.Infrastructure.Persistence;
 
-public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options) : DbContext(options)
+public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options) : DbContext(options), IBookingDbContext
 {
     public DbSet<Property> Properties => Set<Property>();
     public DbSet<RoomType> RoomTypes => Set<RoomType>();

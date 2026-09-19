@@ -4,4 +4,8 @@
     <ProjectReference Include="..\BookingEngine.Domain\BookingEngine.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
 </Project>

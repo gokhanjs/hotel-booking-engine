@@ -7,7 +7,7 @@ using Npgsql;
 
 namespace BookingEngine.IntegrationTests.Persistence;
 
-public class SchemaTests(PostgresFixture fixture)
+public class SchemaTests(ApiFactory fixture)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -87,6 +87,22 @@ public class SchemaTests(PostgresFixture fixture)
         Assert.False(await db.RatePlans.AnyAsync(r => r.Id == parent.Id, Ct));
         Assert.False(await db.Restrictions.AnyAsync(r => r.RatePlanId == parent.Id, Ct));
         Assert.False(await db.Availability.AnyAsync(a => a.RoomTypeId == roomType.Id, Ct));
+    }
+
+    [Fact]
+    public async Task Deleting_a_property_removes_derived_rate_plans_with_their_parents()
+    {
+        var (roomType, parent) = await SeedAsync();
+        var child = new RatePlan(roomType.Id, "NRF", "Non-refundable", SellMode.PerPerson, MealPlan.Breakfast, 20);
+        child.DeriveFrom(parent, DerivedAdjustmentType.Percent, -10);
+
+        await using var db = fixture.CreateDbContext();
+        db.RatePlans.Add(child);
+        await db.SaveChangesAsync(Ct);
+
+        await db.Properties.Where(p => p.Id == roomType.PropertyId).ExecuteDeleteAsync(Ct);
+
+        Assert.False(await db.RatePlans.AnyAsync(r => r.RoomTypeId == roomType.Id, Ct));
     }
 
     private async Task<(RoomType RoomType, RatePlan Parent)> SeedAsync()

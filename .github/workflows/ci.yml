@@ -31,5 +31,13 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      - name: OpenAPI drift check
+        run: |
+          if [ -n "$(git status --porcelain -- docs/openapi)" ]; then
+            git diff -- docs/openapi
+            echo "::error::docs/openapi is out of date. Build locally and commit the regenerated document."
+            exit 1
+          fi
+
       - name: Test
         run: dotnet test --no-build --configuration Release

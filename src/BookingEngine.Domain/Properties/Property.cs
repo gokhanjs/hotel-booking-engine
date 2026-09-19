@@ -18,14 +18,17 @@ public sealed partial class Property : Entity
 
     public Property(string name, string currency, string timezone, string countryCode, string city)
     {
-        Rename(name);
         Currency = ValidCode(currency, CurrencyPattern(), "Currency");
+        UpdateDetails(name, timezone, countryCode, city);
+    }
+
+    public void UpdateDetails(string name, string timezone, string countryCode, string city)
+    {
+        Name = Guard.NotBlank(name, "Name", 200);
         Timezone = ValidTimezone(timezone);
         CountryCode = ValidCode(countryCode, CountryPattern(), "Country code");
         City = Guard.NotBlank(city, "City", 100);
     }
-
-    public void Rename(string name) => Name = Guard.NotBlank(name, "Name", 200);
 
     public void SetLocation(string? address, decimal? latitude, decimal? longitude)
     {
