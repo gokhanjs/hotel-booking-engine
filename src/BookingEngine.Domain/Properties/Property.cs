@@ -47,6 +47,9 @@ public sealed partial class Property : Entity
         Longitude = longitude;
     }
 
+    public DateOnly Today(DateTimeOffset utcNow) =>
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(utcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone)).DateTime);
+
     private static string ValidCode(string value, Regex pattern, string name) =>
         pattern.IsMatch(value) ? value : throw new DomainException($"{name} '{value}' is not a valid ISO code.");
 

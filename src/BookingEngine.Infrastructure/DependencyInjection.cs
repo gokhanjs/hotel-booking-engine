@@ -18,6 +18,7 @@ public static class DependencyInjection
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
         services.AddScoped<IBookingDbContext>(sp => sp.GetRequiredService<BookingDbContext>());
+        services.AddScoped<IAriWriter, AriWriter>();
 
         services.AddHealthChecks().AddDbContextCheck<BookingDbContext>(tags: ["ready"]);
 

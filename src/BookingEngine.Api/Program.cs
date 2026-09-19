@@ -62,6 +62,7 @@ app.MapGroup("/api/v1")
     .RequireAuthorization()
     .MapProperties()
     .MapRoomTypes()
-    .MapRatePlans();
+    .MapRatePlans()
+    .MapAri();
 
 app.Run();

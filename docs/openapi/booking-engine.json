@@ -994,10 +994,418 @@
           }
         ]
       }
+    },
+    "/api/v1/properties/{propertyId}/availability": {
+      "post": {
+        "tags": [
+          "Availability, rates and restrictions"
+        ],
+        "summary": "Set room type availability for date ranges",
+        "description": "Each value sets the sellable room count of a room type for every date in [date_from, date_to], optionally limited to weekdays. Later values win when ranges overlap.",
+        "operationId": "UpdateAvailability",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AriUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Availability, rates and restrictions"
+        ],
+        "summary": "Read stored availability",
+        "operationId": "GetAvailability",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/properties/{propertyId}/restrictions": {
+      "post": {
+        "tags": [
+          "Availability, rates and restrictions"
+        ],
+        "summary": "Patch rates and restrictions for date ranges",
+        "description": "Only the fields present in a value are changed; omitted fields keep their stored value. New dates default to open with a minimum stay of one night. Send max_stay 0 to remove a maximum stay.",
+        "operationId": "UpdateRestrictions",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestrictionUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AriUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Availability, rates and restrictions"
+        ],
+        "summary": "Read stored rates and restrictions",
+        "operationId": "GetRestrictions",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RestrictionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [ ]
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "AriUpdateResponse": {
+        "required": [
+          "affected_dates"
+        ],
+        "type": "object",
+        "properties": {
+          "affected_dates": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AvailabilityResponse": {
+        "required": [
+          "room_type_id",
+          "date",
+          "availability"
+        ],
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "availability": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AvailabilityUpdateRequest": {
+        "required": [
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "values": {
+            "maxItems": 500,
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityValue"
+            }
+          }
+        }
+      },
+      "AvailabilityValue": {
+        "required": [
+          "room_type_id",
+          "date_from",
+          "date_to",
+          "availability"
+        ],
+        "type": "object",
+        "properties": {
+          "room_type_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "availability": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "days": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Weekday"
+            }
+          }
+        }
+      },
       "CreatePropertyRequest": {
         "required": [
           "name",
@@ -1458,6 +1866,162 @@
           }
         }
       },
+      "RestrictionResponse": {
+        "required": [
+          "rate_plan_id",
+          "date",
+          "rate",
+          "stop_sell",
+          "closed_to_arrival",
+          "closed_to_departure",
+          "min_stay_arrival",
+          "min_stay_through",
+          "max_stay"
+        ],
+        "type": "object",
+        "properties": {
+          "rate_plan_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "rate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "stop_sell": {
+            "type": "boolean"
+          },
+          "closed_to_arrival": {
+            "type": "boolean"
+          },
+          "closed_to_departure": {
+            "type": "boolean"
+          },
+          "min_stay_arrival": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "min_stay_through": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_stay": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "RestrictionUpdateRequest": {
+        "required": [
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "values": {
+            "maxItems": 500,
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestrictionValue"
+            }
+          }
+        }
+      },
+      "RestrictionValue": {
+        "required": [
+          "rate_plan_id",
+          "date_from",
+          "date_to"
+        ],
+        "type": "object",
+        "properties": {
+          "rate_plan_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Weekday"
+            }
+          },
+          "rate": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "stop_sell": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "closed_to_arrival": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "closed_to_departure": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "min_stay_arrival": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "min_stay_through": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "max_stay": {
+            "maximum": 365,
+            "minimum": 0,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RoomTypeResponse": {
         "required": [
           "id",
@@ -1641,6 +2205,17 @@
             "format": "int32"
           }
         }
+      },
+      "Weekday": {
+        "enum": [
+          "mo",
+          "tu",
+          "we",
+          "th",
+          "fr",
+          "sa",
+          "su"
+        ]
       }
     },
     "securitySchemes": {
@@ -1661,6 +2236,9 @@
     },
     {
       "name": "Rate plans"
+    },
+    {
+      "name": "Availability, rates and restrictions"
     }
   ]
 }
