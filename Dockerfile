@@ -16,7 +16,7 @@ RUN dotnet publish src/BookingEngine.Api --no-restore -c Release -o /app -p:Open
       --project src/BookingEngine.Infrastructure --startup-project src/BookingEngine.Api \
       --output /app/efbundle
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra@sha256:6385dc0eaef704fad88d3f65c334e791a371bbe448f52ca39d83d2df49251e28 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra@sha256:00e0ad6a7ef8c0c1391b87f05c7ac757a15740455688f2bfcd146a3f4b987efd AS runtime
 WORKDIR /app
 COPY --from=build /app .
 
